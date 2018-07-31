@@ -32,6 +32,17 @@ base = {
     templateUrl: "profile/profile-favs/profile-favs.html",
 }
 
+####################################################
+## Assigned
+####################################################
+
+ProfileAssignedDirective = () ->
+    return _.extend({}, base, {
+        controller: "ProfileAssigned"
+    })
+
+angular.module("taigaProfile").directive("tgProfileAssigned", ProfileAssignedDirective)
+
 
 ####################################################
 ## Liked
