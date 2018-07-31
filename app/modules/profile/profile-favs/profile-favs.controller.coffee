@@ -138,6 +138,13 @@ class ProfileAssignedController extends FavsBaseController
     constructor: (@userService) ->
         super()
         @.tabName = 'assignees'
+        @.enableFilterByAll = true
+        @.enableFilterByProjects = false
+        @.enableFilterByEpics = true
+        @.enableFilterByUserStories = true
+        @.enableFilterByTasks = true
+        @.enableFilterByIssues = true
+        @.enableFilterByTextQuery = true
         @._getItems = @userService.getAssigned
 
 
