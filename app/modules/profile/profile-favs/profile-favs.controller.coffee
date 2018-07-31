@@ -126,6 +126,23 @@ class FavsBaseController
             @._resetList()
             @.loadItems()
 
+####################################################
+## Assigned
+####################################################
+
+class ProfileAssignedController extends FavsBaseController
+    @.$inject = [
+        "tgUserService",
+    ]
+
+    constructor: (@userService) ->
+        super()
+        @.tabName = 'assignees'
+        @._getItems = @userService.getAssigned
+
+
+angular.module("taigaProfile")
+    .controller("ProfileAssigned", ProfileAssignedController)
 
 ####################################################
 ## Liked
