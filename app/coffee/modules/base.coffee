@@ -91,6 +91,8 @@ urls = {
     "project-wiki-list": "/project/:project/wiki-list"
     "project-wiki-page": "/project/:project/wiki/:slug"
 
+    "global-search":"/global-search"
+
     # Team
     "project-team": "/project/:project/team"
 
