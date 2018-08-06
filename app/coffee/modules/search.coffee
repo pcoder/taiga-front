@@ -58,25 +58,28 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
 
         @.loadInitialData()
 
-        title = @translate.instant("SEARCH.PAGE_TITLE", {projectName: @scope.project.name})
-        description = @translate.instant("SEARCH.PAGE_DESCRIPTION", {
-            projectName: @scope.project.name,
-            projectDescription: @scope.project.description
-        })
+        if @scope.project
+            title = @translate.instant("SEARCH.PAGE_TITLE", {projectName: @scope.project.name})
+            description = @translate.instant("SEARCH.PAGE_DESCRIPTION", {
+                projectName: @scope.project.name,
+                projectDescription: @scope.project.description
+            })
 
-        @appMetaService.setAll(title, description)
+            @appMetaService.setAll(title, description)
 
-        # Search input watcher
-        @scope.searchTerm = null
-        loadSearchData = debounceLeading(100, (t) => @.loadSearchData(t))
+            # Search input watcher
+            @scope.searchTerm = null
+            loadSearchData = debounceLeading(100, (t) => @.loadSearchData(t))
 
-        bindOnce @scope, "projectId", (projectId) =>
-            if !@scope.searchResults && @scope.searchTerm
-                @.loadSearchData()
+            bindOnce @scope, "projectId", (projectId) =>
+                if !@scope.searchResults && @scope.searchTerm
+                    @.loadSearchData()
 
-        @scope.$watch "searchTerm", (term) =>
-            if term != undefined && @scope.projectId
-                @.loadSearchData(term)
+            @scope.$watch "searchTerm", (term) =>
+                if term != undefined && @scope.projectId
+                    @.loadSearchData(term)
+        else
+            console.log("No project defined for SearchController. We ought to use global search")
 
     loadFilters: ->
         defered = @q.defer()
@@ -84,7 +87,10 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
         return defered.promise
 
     loadProject: ->
+        if not @projectService.project
+            return null
         project = @projectService.project.toJS()
+
 
         @scope.project = project
         @scope.$emit('project:loaded', project)
@@ -113,9 +119,9 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
 
     loadInitialData: ->
         project = @.loadProject()
-
-        @scope.projectId = project.id
-        @.fillUsersAndRoles(project.members, project.roles)
+        if project
+            @scope.projectId = project.id
+            @.fillUsersAndRoles(project.members, project.roles)
 
 module.controller("SearchController", SearchController)
 
@@ -137,7 +143,11 @@ SearchBoxDirective = (projectService, $lightboxService, $navurls, $location, $ro
 
             text = $el.find("#search-text").val()
 
-            url = $navurls.resolve("project-search", {project: project.get("slug")})
+            if not project
+                url = $navurls.resolve("global-search")
+                console.log("No slug supplied. Going for global search " + url)
+            else
+                url = $navurls.resolve("project-search", {project: project.get("slug")})
 
             $scope.$apply ->
                 $lightboxService.close($el)
