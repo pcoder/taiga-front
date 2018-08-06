@@ -17,7 +17,7 @@
 # File: navigation-bar.directive.coffee
 ###
 
-NavigationBarDirective = (currentUserService, navigationBarService, locationService, navUrlsService, config) ->
+NavigationBarDirective = (currentUserService, navigationBarService, locationService, navUrlsService, config, lightboxFactory) ->
     link = (scope, el, attrs, ctrl) ->
         scope.vm = {}
 
@@ -38,6 +38,10 @@ NavigationBarDirective = (currentUserService, navigationBarService, locationServ
                 scope.vm.active = true
             else
                 scope.vm.active = false
+         scope.vm.search = ->
+            lightboxFactory.create("tg-search-box", {
+                "class": "lightbox lightbox-search"
+            })
 
     directive = {
         templateUrl: "navigation-bar/navigation-bar.html"
@@ -52,7 +56,8 @@ NavigationBarDirective.$inject = [
     "tgNavigationBarService",
     "$tgLocation",
     "$tgNavUrls",
-    "$tgConfig"
+    "$tgConfig",
+    "tgLightboxFactory"
 ]
 
 angular.module("taigaNavigationBar").directive("tgNavigationBar", NavigationBarDirective)
