@@ -91,6 +91,16 @@ configure = ($routeProvider, $locationProvider, $httpProvider, $provide, $tgEven
         }
     )
 
+    # Global search
+    $routeProvider.when("/global-search",
+      {
+        templateUrl: "search/search.html",
+        reloadOnSearch: false,
+        section: "search",
+        loader: true
+      }
+    )
+
     # Discover
     $routeProvider.when("/discover",
         {
