@@ -22,6 +22,14 @@ nav.navbar(ng-if="vm.isEnabledHeader")
             translate="PROJECT.NAVIGATION.HELP"
         )
 
+        a(
+            href=""
+            ng-click="vm.search()"
+            aria-label="{{'PROJECT.NAVIGATION.GLOBAL_SEARCH_TITLE' | translate}}"
+            tabindex="1"
+        )
+            tg-svg(svg-icon="icon-search")
+
     div.nav-right(ng-if="!vm.isAuthenticated")
         a.login(
             ng-click="vm.login()"
