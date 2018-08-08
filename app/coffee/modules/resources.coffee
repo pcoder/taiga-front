@@ -188,6 +188,9 @@ urls = {
     # Search
     "search": "/search"
 
+    # Global Search
+    "global-search": "/global-search"
+
     # Export/Import
     "exporter": "/exporter"
     "importer": "/importer/load_dump"
