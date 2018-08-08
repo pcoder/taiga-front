@@ -30,18 +30,27 @@ resourceProvider = ($repo, $urls, $http, $q) ->
 
     service.do = (projectId, term) ->
         deferredAbort = $q.defer()
+        params_to_send ={}
+        if not projectId
+            url = $urls.resolve("global-search")
+            params_to_send = {
+                text: term,
+                get_all: false,
+            }
+        else
+            url = $urls.resolve("search")
+            params_to_send = {
+                project: projectId
+                text: term,
+                get_all: false,
+            }
 
-        url = $urls.resolve("search")
         params = {
             url: url,
             method: "GET",
             timeout: deferredAbort.promise,
             cancelable: true,
-            params: {
-                project: projectId
-                text: term,
-                get_all: false,
-            }
+            params: params_to_send
         }
 
         request = $http.request(params).then (data) ->
