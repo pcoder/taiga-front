@@ -843,6 +843,8 @@
             "TITLE_CREATE_PROJECT": "Create project",
             "HELP_TITLE": "Taiga Support Page",
             "HELP": "Help",
+            "GLOBAL_SEARCH_TITLE": "Global search page",
+            "GLOBAL_SEARCH": "Global search",
             "HOMEPAGE": "Homepage",
             "FEEDBACK_TITLE": "Send feedback",
             "FEEDBACK": "Feedback",
