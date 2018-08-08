@@ -79,7 +79,25 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
                 if term != undefined && @scope.projectId
                     @.loadSearchData(term)
         else
+            @scope.sectionName = "Global Search"
+            @appMetaService.setAll("Global Search", "This permits you to do a global search")
             console.log("No project defined for SearchController. We ought to use global search")
+
+            # Search input watcher
+            @scope.searchTerm = null
+            loadGlobalSearchData = debounceLeading(100, (t) => @.loadGlobalSearchData(t))
+
+            bindOnce @scope, "projectId", (projectId) =>
+                console.log("7. in bindOnce @scope, \"projectId\", (projectId)")
+                if !@scope.searchResults && @scope.searchTerm
+                    console.log("8. in !@scope.searchResults && @scope.searchTerm")
+                    @.loadGlobalSearchData()
+
+            @scope.$watch "searchTerm", (term) =>
+                console.log("9. in @scope.$watch \"searchTerm\", (term)")
+                if term != undefined
+                    console.log("10. @scope.$watch \"searchTerm\", (term) and term = " + term)
+                    @.loadGlobalSearchData(term)
 
     loadFilters: ->
         defered = @q.defer()
@@ -110,10 +128,26 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
             @scope.searchResults = data
             @scope.loading = false
 
+    loadGlobalSearchData: (term = "") ->
+        console.log("loadGlobalSearchData term = " + term)
+        @scope.loading = true
+
+        @._loadGlobalSearchData(term).then (data) =>
+            @scope.searchResults = data
+            @scope.loading = false
+
     _loadSearchData: (term = "") ->
         @._promise.abort() if @._promise
 
         @._promise = @rs.search.do(@scope.projectId, term)
+
+        return @._promise
+
+    _loadGlobalSearchData: (term = "") ->
+        console.log("in 12. _loadGlobalSearchData: (term = \"\") Searching for " + term)
+        @._promise.abort() if @._promise
+        console.log("in 12. _loadGlobalSearchData: (term = \"\") Searching for " + term + " after abort")
+        @._promise = @rs.search.do(null, term)
 
         return @._promise
 
@@ -258,10 +292,13 @@ SearchDirective = ($log, $compile, $templatecache, $routeparams, $location, $ana
             $el.find(".search-result-table").html(element)
 
         $scope.$watch "searchResults", (data) ->
+            realdata = data
             lastSearchResults = data
-
             return if !lastSearchResults
 
+            Object.keys(realdata).forEach  (key,index) ->
+                data = data[key]
+            lastSearchResults = data
             activeSection = getActiveSection(data)
 
             renderFilterTabs(data)
@@ -294,6 +331,7 @@ SearchDirective = ($log, $compile, $templatecache, $routeparams, $location, $ana
         linkTable($scope, $el, $attrs, $ctrl)
 
         searchText = $routeparams.text
+        $scope.searchTerm = searchText
         $scope.$watch "projectId", (projectId) ->
             $scope.searchTerm =  searchText if projectId?
 
