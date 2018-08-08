@@ -125,7 +125,10 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
         @scope.loading = true
 
         @._loadSearchData(term).then (data) =>
-            @scope.searchResults = data
+            rdata = {}
+            Object.keys(data).forEach  (key,index) ->
+               rdata = data[key]
+            @scope.searchResults = rdata
             @scope.loading = false
 
     loadGlobalSearchData: (term = "") ->
@@ -133,7 +136,11 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
         @scope.loading = true
 
         @._loadGlobalSearchData(term).then (data) =>
-            @scope.searchResults = data
+            rdata = {}
+            Object.keys(data).forEach  (key,index) ->
+                rdata = data[key]
+            console.log("Receive info in loadGlobalSearchData")
+            @scope.searchResults = rdata
             @scope.loading = false
 
     _loadSearchData: (term = "") ->
@@ -292,13 +299,11 @@ SearchDirective = ($log, $compile, $templatecache, $routeparams, $location, $ana
             $el.find(".search-result-table").html(element)
 
         $scope.$watch "searchResults", (data) ->
-            realdata = data
+            console.log("searchResults received " + data)
             lastSearchResults = data
+
             return if !lastSearchResults
 
-            Object.keys(realdata).forEach  (key,index) ->
-                data = data[key]
-            lastSearchResults = data
             activeSection = getActiveSection(data)
 
             renderFilterTabs(data)
