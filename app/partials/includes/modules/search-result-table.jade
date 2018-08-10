@@ -13,8 +13,12 @@ script(type="text/ng-template", id="search-issues")
                 div.ref(tg-bo-ref="issue.ref")
                 div.user-stories
                     div.user-story-name
-                        a(href="", tg-nav="project-issues-detail:project=project.slug,ref=issue.ref",
-                          tg-bind-html="issue.subject | emojify")
+                        if project
+                            a(href="", tg-nav="project-issues-detail:project=project.slug,ref=issue.ref",
+                            tg-bind-html="issue.subject | emojify")
+                        else
+                            a(href="", tg-nav="project-issues-detail:project=issue.project_slug,ref=issue.ref",
+                            tg-bind-html="issue.subject | emojify")
                 div.status(tg-listitem-issue-status="issue")
                 div.assigned-to(tg-listitem-assignedto="issue")
 
