@@ -33,7 +33,11 @@ script(type="text/ng-template", id="search-epics")
                 div.ref(tg-bo-ref="epic.ref")
                 div.user-stories
                     div.user-story-name
-                        a(href="", tg-nav="project-epics-detail:project=project.slug,ref=epic.ref",
+                        if project
+                            a(href="", tg-nav="project-epics-detail:project=project.slug,ref=epic.ref",
+                            tg-bind-html="epic.subject | emojify")
+                        else
+                            a(href="", tg-nav="project-epics-detail:project=epic.project_slug,ref=epic.ref",
                             tg-bind-html="epic.subject | emojify")
                 div.status(tg-listitem-epic-status="epic")
 
@@ -55,11 +59,19 @@ script(type="text/ng-template", id="search-userstories")
                 div.ref(tg-bo-ref="us.ref")
                 div.user-stories
                     div.user-story-name
-                        a(href="", tg-nav="project-userstories-detail:project=project.slug,ref=us.ref",
+                        if project
+                            a(href="", tg-nav="project-userstories-detail:project=project.slug,ref=us.ref",
+                            tg-bind-html="us.subject | emojify")
+                        else
+                            a(href="", tg-nav="project-userstories-detail:project=us.project_slug,ref=us.ref",
                             tg-bind-html="us.subject | emojify")
                 div.sprint
                     div.sprint-link
-                        a(href="", tg-nav="project-taskboard:project=project.slug,sprint=us.milestone_slug",
+                        if project
+                            a(href="", tg-nav="project-taskboard:project=project.slug,sprint=us.milestone_slug",
+                            tg-bo-bind="us.milestone_name")
+                        else
+                            a(href="", tg-nav="project-taskboard:project=us.project_slug,sprint=us.milestone_slug",
                             tg-bo-bind="us.milestone_name")
                 div.status(tg-listitem-us-status="us")
                 div.points(tg-bo-bind="us.total_points")
@@ -80,7 +92,11 @@ script(type="text/ng-template", id="search-tasks")
                 div.ref(tg-bo-ref="task.ref")
                 div.user-stories
                     div.user-story-name
-                        a(href="", tg-nav="project-tasks-detail:project=project.slug,ref=task.ref",
+                        if project
+                            a(href="", tg-nav="project-tasks-detail:project=project.slug,ref=task.ref",
+                            tg-bind-html="task.subject | emojify")
+                        else
+                            a(href="", tg-nav="project-tasks-detail:project=task.project_slug,ref=task.ref",
                             tg-bind-html="task.subject | emojify")
                 div.status(tg-listitem-task-status="task")
                 div.assigned-to(tg-listitem-assignedto="task")
@@ -98,6 +114,12 @@ script(type="text/ng-template", id="search-wikipages")
                 div.user-stories
                     div.user-story-name
                         a(href="", tg-nav="project-wiki-page:project=project.slug,slug=wikipage.slug",
+                            tg-bo-bind="wikipage.slug")
+                        if project
+                            a(href="", tg-nav="project-wiki-page:project=project.slug,slug=wikipage.slug",
+                            tg-bo-bind="wikipage.slug")
+                        else
+                            a(href="", tg-nav="project-wiki-page:project=wikipage.project_slug,slug=wikipage.slug",
                             tg-bo-bind="wikipage.slug")
 
     div.empty-large(ng-class="{'hidden': wikipages.length}")
