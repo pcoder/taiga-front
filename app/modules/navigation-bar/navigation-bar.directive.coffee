@@ -39,7 +39,7 @@ NavigationBarDirective = (currentUserService, navigationBarService, locationServ
             else
                 scope.vm.active = false
          scope.vm.search = ->
-            lightboxFactory.create("tg-search-box", {
+            lightboxFactory.create("tg-global-search-box", {
                 "class": "lightbox lightbox-search"
             })
 

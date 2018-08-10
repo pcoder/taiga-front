@@ -215,6 +215,60 @@ module.directive("tgSearchBox", SearchBoxDirective)
 
 
 #############################################################################
+## Global Search box directive
+#############################################################################
+
+GlobalSearchBoxDirective = ($lightboxService, $navurls, $location, $route)->
+    link = ($scope, $el, $attrs) ->
+        project = null
+
+        submit = debounce 2000, (event) =>
+            event.preventDefault()
+
+            form = $el.find("form").checksley()
+            if not form.validate()
+                return
+
+            text = $el.find("#search-text").val()
+
+
+            url = $navurls.resolve("global-search")
+            console.log("No slug supplied. Going for global search " + url)
+            console.log(" Url = " + url);
+
+            $scope.$apply ->
+                $lightboxService.close($el)
+
+                $location.path(url)
+                $location.search("text", text).path(url)
+                console.log(" 1. url = " + $location.url);
+                $route.reload()
+
+
+        openGlobalLightbox = () ->
+            $lightboxService.open($el).then () ->
+                $el.find("#search-text").focus()
+
+        $el.on "submit", "form", submit
+
+        openGlobalLightbox()
+
+    return {
+        templateUrl: "search/lightbox-search.html",
+        link:link
+    }
+
+GlobalSearchBoxDirective.$inject = [
+    "lightboxService",
+    "$tgNavUrls",
+    "$tgLocation",
+    "$route"
+]
+
+module.directive("tgGlobalSearchBox", GlobalSearchBoxDirective)
+
+
+#############################################################################
 ## Search Directive
 #############################################################################
 
