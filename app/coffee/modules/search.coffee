@@ -133,11 +133,7 @@ class SearchController extends mixOf(taiga.Controller, taiga.PageMixin)
         @scope.loading = true
 
         @._loadGlobalSearchData(term).then (data) =>
-            rdata = {}
-            Object.keys(data).forEach  (key,index) ->
-                rdata = data[key]
-            console.log("Receive info in loadGlobalSearchData")
-            @scope.searchResults = rdata
+            @scope.searchResults = data
             @scope.loading = false
 
     _loadSearchData: (term = "") ->
