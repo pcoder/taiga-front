@@ -13,10 +13,10 @@ script(type="text/ng-template", id="search-issues")
                 div.ref(tg-bo-ref="issue.ref")
                 div.user-stories
                     div.user-story-name
-                        if project
+                        div.user-story-name(ng-if="project")
                             a(href="", tg-nav="project-issues-detail:project=project.slug,ref=issue.ref",
                             tg-bind-html="issue.subject | emojify")
-                        else
+                        div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-issues-detail:project=issue.project_slug,ref=issue.ref",
                             tg-bind-html="issue.subject | emojify")
                 div.status(tg-listitem-issue-status="issue")
@@ -37,10 +37,10 @@ script(type="text/ng-template", id="search-epics")
                 div.ref(tg-bo-ref="epic.ref")
                 div.user-stories
                     div.user-story-name
-                        if project
+                        div.user-story-name(ng-if="project")
                             a(href="", tg-nav="project-epics-detail:project=project.slug,ref=epic.ref",
                             tg-bind-html="epic.subject | emojify")
-                        else
+                        div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-epics-detail:project=epic.project_slug,ref=epic.ref",
                             tg-bind-html="epic.subject | emojify")
                 div.status(tg-listitem-epic-status="epic")
@@ -62,19 +62,18 @@ script(type="text/ng-template", id="search-userstories")
             div.row.table-main(ng-repeat="us in userstories track by us.id")
                 div.ref(tg-bo-ref="us.ref")
                 div.user-stories
-                    div.user-story-name
-                        if project
-                            a(href="", tg-nav="project-userstories-detail:project=project.slug,ref=us.ref",
-                            tg-bind-html="us.subject | emojify")
-                        else
-                            a(href="", tg-nav="project-userstories-detail:project=us.project_slug,ref=us.ref",
-                            tg-bind-html="us.subject | emojify")
+                    div.user-story-name(ng-if="project")
+                        a(href="", tg-nav="project-userstories-detail:project=project.slug,ref=us.ref",
+                        tg-bind-html="us.subject | emojify")
+                    div.user-story-name(ng-if="!project")
+                        a(href="", tg-nav="project-userstories-detail:project=us.project_slug,ref=us.ref",
+                        tg-bind-html="us.subject | emojify")
                 div.sprint
                     div.sprint-link
-                        if project
+                        div.user-story-name(ng-if="project")
                             a(href="", tg-nav="project-taskboard:project=project.slug,sprint=us.milestone_slug",
                             tg-bo-bind="us.milestone_name")
-                        else
+                        div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-taskboard:project=us.project_slug,sprint=us.milestone_slug",
                             tg-bo-bind="us.milestone_name")
                 div.status(tg-listitem-us-status="us")
@@ -96,10 +95,10 @@ script(type="text/ng-template", id="search-tasks")
                 div.ref(tg-bo-ref="task.ref")
                 div.user-stories
                     div.user-story-name
-                        if project
+                        div.user-story-name(ng-if="project")
                             a(href="", tg-nav="project-tasks-detail:project=project.slug,ref=task.ref",
                             tg-bind-html="task.subject | emojify")
-                        else
+                        div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-tasks-detail:project=task.project_slug,ref=task.ref",
                             tg-bind-html="task.subject | emojify")
                 div.status(tg-listitem-task-status="task")
@@ -117,10 +116,10 @@ script(type="text/ng-template", id="search-wikipages")
             div.row.table-main(ng-repeat="wikipage in wikipages track by wikipage.id")
                 div.user-stories
                     div.user-story-name
-                        if project
+                        div.user-story-name(ng-if="project")
                             a(href="", tg-nav="project-wiki-page:project=project.slug,slug=wikipage.slug",
                             tg-bo-bind="wikipage.slug")
-                        else
+                        div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-wiki-page:project=wikipage.project_slug,slug=wikipage.slug",
                             tg-bo-bind="wikipage.slug")
 
