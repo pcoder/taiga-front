@@ -177,11 +177,8 @@ SearchBoxDirective = (projectService, $lightboxService, $navurls, $location, $ro
 
             text = $el.find("#search-text").val()
 
-            if not project
-                url = $navurls.resolve("global-search")
-                console.log("No slug supplied. Going for global search " + url)
-            else
-                url = $navurls.resolve("project-search", {project: project.get("slug")})
+            url = $navurls.resolve("project-search", {project: project.get("slug")})
+            console.log(" cUrl = " + url);
 
             $scope.$apply ->
                 $lightboxService.close($el)
