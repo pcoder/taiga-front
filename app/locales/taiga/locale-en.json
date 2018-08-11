@@ -1068,6 +1068,10 @@
             "TITLE": "Search",
             "PLACEHOLDER_SEARCH": "What are you looking for?"
         },
+        "GLOBAL_SEARCH": {
+            "TITLE": "Global Search",
+            "PLACEHOLDER_SEARCH": "What are you looking for globally?"
+        },
         "ADD_EDIT_SPRINT": {
             "TITLE": "New sprint",
             "PLACEHOLDER_SPRINT_NAME": "sprint name",
@@ -1462,6 +1466,19 @@
     "SEARCH": {
         "PAGE_TITLE": "Search - {{projectName}}",
         "PAGE_DESCRIPTION": "Search anything, user stories, issues, tasks or wiki pages, in the project {{projectName}}: {{projectDescription}}",
+        "FILTER_EPICS": "Epics",
+        "FILTER_USER_STORIES": "User Stories",
+        "FILTER_ISSUES": "Issues",
+        "FILTER_TASKS": "Tasks",
+        "FILTER_WIKI": "Wiki Pages",
+        "PLACEHOLDER_SEARCH": "Search in...",
+        "TITLE_ACTION_SEARCH": "search",
+        "EMPTY_TITLE": "It looks like nothing was found with your search criteria.",
+        "EMPTY_DESCRIPTION": "Maybe try one of the tabs above or search again"
+    },
+    "GLOBAL_SEARCH": {
+        "PAGE_TITLE": "Global Search",
+        "PAGE_DESCRIPTION": "Search anything, user stories, issues, tasks or wiki pages, globally",
         "FILTER_EPICS": "Epics",
         "FILTER_USER_STORIES": "User Stories",
         "FILTER_ISSUES": "Issues",
