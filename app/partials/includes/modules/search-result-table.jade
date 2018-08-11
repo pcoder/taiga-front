@@ -19,7 +19,8 @@ script(type="text/ng-template", id="search-issues")
                         div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-issues-detail:project=issue.project_slug,ref=issue.ref",
                             tg-bind-html="issue.subject | emojify")
-                div.status(tg-listitem-issue-status="issue")
+                div.status(ng-if="project" tg-listitem-issue-status="issue")
+                div.status(ng-if="!project" tg-bo-bind="issue.issue_statusname")
                 div.assigned-to(tg-listitem-assignedto="issue")
 
     div.empty-large(ng-class="{'hidden': issues.length}")
@@ -43,7 +44,8 @@ script(type="text/ng-template", id="search-epics")
                         div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-epics-detail:project=epic.project_slug,ref=epic.ref",
                             tg-bind-html="epic.subject | emojify")
-                div.status(tg-listitem-epic-status="epic")
+                div.status(ng-if="project" tg-listitem-epic-status="epic")
+                div.status(ng-if="!project" tg-bo-bind="epic.epic_statusname")
 
     div.empty-search-results(ng-class="{'hidden': epics.length}")
         include ../components/empty-search-results
@@ -76,7 +78,8 @@ script(type="text/ng-template", id="search-userstories")
                         div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-taskboard:project=us.project_slug,sprint=us.milestone_slug",
                             tg-bo-bind="us.milestone_name")
-                div.status(tg-listitem-us-status="us")
+                div.status(ng-if="project" tg-listitem-us-status="us")
+                div.status(ng-if="!project" tg-bo-bind="us.us_statusname")
                 div.points(tg-bo-bind="us.total_points")
 
     div.empty-large(ng-class="{'hidden': userstories.length}")
@@ -101,7 +104,8 @@ script(type="text/ng-template", id="search-tasks")
                         div.user-story-name(ng-if="!project")
                             a(href="", tg-nav="project-tasks-detail:project=task.project_slug,ref=task.ref",
                             tg-bind-html="task.subject | emojify")
-                div.status(tg-listitem-task-status="task")
+                div.status(ng-if="project" tg-listitem-task-status="task")
+                div.status(ng-if="!project" tg-bo-bind="task.task_statusname")
                 div.assigned-to(tg-listitem-assignedto="task")
 
     div.empty-large(ng-class="{'hidden': tasks.length}")
