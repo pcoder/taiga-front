@@ -681,6 +681,32 @@ ListItemAssignedtoDirective = ($template, $translate, avatarService) ->
 module.directive("tgListitemAssignedto", ["$tgTemplate", "$translate", "tgAvatarService", ListItemAssignedtoDirective])
 
 
+ListItemAssignedtoForGlobalSearchDirective = ($template, $translate, avatarService) ->
+    template = $template.get("common/components/list-item-assigned-to-avatar.html", true)
+
+    link = ($scope, $el, $attrs) ->
+
+        item = $scope.$eval($attrs.tgListitemAssignedtoForGlobalSearch)
+        ctx = {
+            name: $translate.instant("COMMON.ASSIGNED_TO.NOT_ASSIGNED"),
+        }
+
+        member = Immutable.Map({"gravatar_id": item.assigned_to_gravatar_id})
+        avatar = avatarService.getAvatar(member)
+
+        ctx.imgurl = avatar.url
+        ctx.bg = avatar.bg
+
+        ctx.name = item.assigned_to_fullname
+        console.log(" within link = ($scope, $el, $attrs) " + item.assigned_to_fullname)
+
+        $el.html(template(ctx))
+
+    return {link:link}
+
+module.directive("tgListitemAssignedtoForGlobalSearch", ["$tgTemplate", "$translate", "tgAvatarService", ListItemAssignedtoForGlobalSearchDirective])
+
+
 ListItemIssueStatusDirective = ->
     link = ($scope, $el, $attrs) ->
         issue = $scope.$eval($attrs.tgListitemIssueStatus)
