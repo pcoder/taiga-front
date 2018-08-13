@@ -4,12 +4,16 @@ script(type="text/ng-template", id="search-issues")
     div.search-result-table-container(ng-class="{'hidden': !issues.length}", tg-bind-scope)
         div.search-result-table-header
             div.row.title
+                div.project(ng-if="!project" translate="COMMON.FIELDS.PROJECT")
                 div.ref(translate="COMMON.FIELDS.REF")
                 div.user-stories(translate="SEARCH.FILTER_ISSUES")
                 div.status(translate="COMMON.FIELDS.STATUS")
                 div.assigned-to(translate="COMMON.FIELDS.ASSIGNED_TO")
         div.search-result-table-body
             div.row.table-main(ng-repeat="issue in issues track by issue.id")
+                div.project(ng-if="!project")
+                    a(href="", tg-nav="project:project=issue.project_slug",
+                        tg-bind-html="issue.project_name | emojify")
                 div.ref(tg-bo-ref="issue.ref")
                 div.user-stories
                     div.user-story-name
@@ -31,11 +35,15 @@ script(type="text/ng-template", id="search-epics")
     div.search-result-table-container(ng-class="{'hidden': !epics.length}", tg-bind-scope)
         div.search-result-table-header
             div.row.title
+                div.project(ng-if="!project" translate="COMMON.FIELDS.PROJECT")
                 div.ref(translate="COMMON.FIELDS.REF")
                 div.user-stories(translate="SEARCH.FILTER_EPICS")
                 div.status(translate="COMMON.FIELDS.STATUS")
         div.search-result-table-body
             div.row.table-main(ng-repeat="epic in epics track by epic.id")
+                div.project(ng-if="!project")
+                    a(href="", tg-nav="project:project=epic.project_slug",
+                    tg-bind-html="epic.project_name | emojify")
                 div.ref(tg-bo-ref="epic.ref")
                 div.user-stories
                     div.user-story-name
@@ -56,6 +64,7 @@ script(type="text/ng-template", id="search-userstories")
     div.search-result-table-container(ng-class="{'hidden': !userstories.length}", tg-bind-scope)
         div.search-result-table-header
             div.row.title
+                div.project(ng-if="!project" translate="COMMON.FIELDS.PROJECT")
                 div.ref(translate="COMMON.FIELDS.REF")
                 div.user-stories(translate="SEARCH.FILTER_USER_STORIES")
                 div.sprint(translate="COMMON.FIELDS.SPRINT")
@@ -63,6 +72,9 @@ script(type="text/ng-template", id="search-userstories")
                 div.points(translate="COMMON.FIELDS.POINTS")
         div.search-result-table-body
             div.row.table-main(ng-repeat="us in userstories track by us.id")
+                div.project(ng-if="!project")
+                    a(href="", tg-nav="project:project=us.project_slug",
+                    tg-bind-html="us.project_name | emojify")
                 div.ref(tg-bo-ref="us.ref")
                 div.user-stories
                     div.user-story-name(ng-if="project")
@@ -90,12 +102,16 @@ script(type="text/ng-template", id="search-tasks")
     div.search-result-table-container(ng-class="{'hidden': !tasks.length}", tg-bind-scope)
         div.search-result-table-header
             div.row.title
+                div.project(ng-if="!project" translate="COMMON.FIELDS.PROJECT")
                 div.ref(translate="COMMON.FIELDS.REF")
                 div.user-stories(translate="SEARCH.FILTER_TASKS")
                 div.status(translate="COMMON.FIELDS.STATUS")
                 div.assigned-to(translate="COMMON.FIELDS.ASSIGNED_TO")
         div.search-result-table-body
             div.row.table-main(ng-repeat="task in tasks track by task.id")
+                div.project(ng-if="!project")
+                    a(href="", tg-nav="project:project=task.project_slug",
+                    tg-bind-html="task.project_name | emojify")
                 div.ref(tg-bo-ref="task.ref")
                 div.user-stories
                     div.user-story-name
@@ -118,9 +134,13 @@ script(type="text/ng-template", id="search-wikipages")
     div.search-result-table-container(ng-class="{'hidden': !wikipages.length}", tg-bind-scope)
         div.search-result-table-header
             div.row.title
+                div.project(ng-if="!project" translate="COMMON.FIELDS.PROJECT")
                 div.user-stories(translate="SEARCH.FILTER_WIKI")
         div.search-result-table-body
             div.row.table-main(ng-repeat="wikipage in wikipages track by wikipage.id")
+                div.project(ng-if="!project")
+                    a(href="", tg-nav="project:project=wikipage.project_slug",
+                    tg-bind-html="wikipage.project_name | emojify")
                 div.user-stories
                     div.user-story-name
                         div.user-story-name(ng-if="project")
