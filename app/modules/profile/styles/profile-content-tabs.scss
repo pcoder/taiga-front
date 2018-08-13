@@ -11,6 +11,7 @@
             transition: color .2s linear;
             .icon {
                 fill: $primary-light;
+                color:  $primary-light;
             }
         }
         &.active {
@@ -20,9 +21,9 @@
             position: relative;
             top: 1px;
             transition: color .2s linear;
-            .icon {
-                color: $primary;
-            }
+            //.icon {
+            //    color: $primary;
+            //}
         }
     }
     .icon {
