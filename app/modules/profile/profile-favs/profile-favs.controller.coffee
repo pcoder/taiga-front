@@ -126,6 +126,30 @@ class FavsBaseController
             @._resetList()
             @.loadItems()
 
+####################################################
+## Assigned
+####################################################
+
+class ProfileAssignedController extends FavsBaseController
+    @.$inject = [
+        "tgUserService",
+    ]
+
+    constructor: (@userService) ->
+        super()
+        @.tabName = 'assignees'
+        @.enableFilterByAll = true
+        @.enableFilterByProjects = false
+        @.enableFilterByEpics = true
+        @.enableFilterByUserStories = true
+        @.enableFilterByTasks = true
+        @.enableFilterByIssues = true
+        @.enableFilterByTextQuery = true
+        @._getItems = @userService.getAssigned
+
+
+angular.module("taigaProfile")
+    .controller("ProfileAssigned", ProfileAssignedController)
 
 ####################################################
 ## Liked

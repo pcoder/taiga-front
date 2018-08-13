@@ -6,10 +6,16 @@ div.profile.centered(ng-if="vm.user")
     div.main
         tg-profile-tabs.timeline-wrapper
             div(
+                tg-profile-tab="{{'USER.PROFILE.TABS.ASSIGNED_TAB' | translate}}"
+                tab-title="{{'USER.PROFILE.TABS.ASSIGNED_TAB_TITLE' | translate}}"
+                tab-icon="icon-assigned"
+                tab-active
+            )
+                div(tg-profile-assigned, user="vm.user")
+            div(
                 tg-profile-tab="{{'USER.PROFILE.TABS.ACTIVITY_TAB' | translate}}"
                 tab-title="{{'USER.PROFILE.TABS.ACTIVITY_TAB_TITLE' | translate}}"
                 tab-icon="icon-timeline"
-                tab-active
             )
                 div(tg-user-timeline, user="vm.user", current-user="vm.isCurrentUser")
 

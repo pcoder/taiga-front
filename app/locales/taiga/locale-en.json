@@ -791,6 +791,8 @@
             "CURRENT_USER_CONTACTS_EMPTY": "You don't have contacts yet",
             "CURRENT_USER_CONTACTS_EMPTY_EXPLAIN": "The people with whom you work at Taiga will be your contacts automatically",
             "TABS": {
+                "ASSIGNED_TAB": "Assigned",
+                "ASSIGNED_TAB_TITLE": "Show all the assigned tasks of this user",
                 "ACTIVITY_TAB": "Timeline",
                 "ACTIVITY_TAB_TITLE": "Show all the activity of this user",
                 "PROJECTS_TAB": "Projects",

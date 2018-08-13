@@ -33,6 +33,9 @@ class UserService extends taiga.Service
     getContacts: (userId, excludeProjectId) ->
         return @rs.users.getContacts(userId, excludeProjectId)
 
+    getAssigned: (userId, pageNumber, objectType, textQuery) ->
+        return @rs.users.getAssigned(userId, pageNumber, objectType, textQuery)
+
     getLiked: (userId, pageNumber, objectType, textQuery) ->
         return @rs.users.getLiked(userId, pageNumber, objectType, textQuery)
 
