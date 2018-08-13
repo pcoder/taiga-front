@@ -33,7 +33,6 @@ bindOnce = @.taiga.bindOnce
 debounce = @.taiga.debounce
 getDefaulColorList = @.taiga.getDefaulColorList
 
-
 module = angular.module("taigaAdmin")
 
 #############################################################################
@@ -113,8 +112,9 @@ class ProjectValuesController extends taiga.Controller
                 unwatch()
     loadValues: =>
         return @rs[@scope.resource].listValues(@scope.projectId, @scope.type).then (values) =>
-            @scope.values = values
-            @scope.maxValueOrder = _.maxBy(values, "order").order
+            if values.length
+                @scope.values = values
+                @scope.maxValueOrder = _.maxBy(values, "order").order
             return values
 
     moveValue: (ctx, itemValue, itemIndex) =>
@@ -129,6 +129,46 @@ class ProjectValuesController extends taiga.Controller
 
 module.controller("ProjectValuesController", ProjectValuesController)
 
+
+#############################################################################
+## Project due dates values Controller
+#############################################################################
+
+class ProjectDueDatesValuesController extends ProjectValuesController
+    @.$inject = [
+        "$scope",
+        "$rootScope",
+        "$tgRepo",
+        "$tgConfirm",
+        "$tgResources",
+    ]
+
+    loadValues: =>
+        return @rs[@scope.resource].listValues(@scope.projectId, @scope.type).then (values) =>
+            if values.length
+                @scope.maxValueOrder = _.maxBy(values, "order").order
+                @displayValues(values)
+            else
+                @createDefaultValues()
+            return values
+
+    createDefaultValues: =>
+        if !@rs[@scope.resource].createDefaultValues?
+            return
+        return @rs[@scope.resource].createDefaultValues(@scope.projectId, @scope.type).then (response) =>
+            values = response.data
+            if values.length
+                @scope.maxValueOrder = _.maxBy(values, "order").order
+                @displayValues(values)
+            return values
+
+    displayValues: (values) =>
+        _.each values, (value, index) ->
+            value.days_to_due_abs = if value.days_to_due != null then Math.abs(value.days_to_due) else null
+            value.sign =  if value.days_to_due >= 0 then 1 else -1
+        @scope.values = values
+
+module.controller("ProjectDueDatesValuesController", ProjectDueDatesValuesController)
 
 #############################################################################
 ## Project values directive
@@ -229,9 +269,8 @@ ProjectValuesDirective = ($log, $repo, $confirm, $location, animationFrame, $tra
             $scope.newValue.order = if $scope.maxValueOrder then $scope.maxValueOrder + 1 else 1
 
             promise = $repo.create(valueType, $scope.newValue)
-            promise.then (data) =>
+            promise.then (data) ->
                 target.addClass("hidden")
-
                 $scope.values.push(data)
                 $scope.maxValueOrder = data.order
                 initializeNewValue()
@@ -332,6 +371,105 @@ ProjectValuesDirective = ($log, $repo, $confirm, $location, animationFrame, $tra
 module.directive("tgProjectValues", ["$log", "$tgRepo", "$tgConfirm", "$tgLocation", "animationFrame",
                                      "$translate", "$rootScope", "tgProjectService", ProjectValuesDirective])
 
+#############################################################################
+## Project due dates values directive
+#############################################################################
+
+ProjectDueDatesValues = ($log, $repo, $confirm, $location, animationFrame, $translate, $rootscope, projectService) ->
+    parentDirective = ProjectValuesDirective($log, $repo, $confirm, $location, animationFrame,
+    $translate, $rootscope, projectService)
+
+    linkDueDateStatusValue = ($scope, $el, $attrs) ->
+        valueType = $attrs.type
+
+        initializeNewValue = ->
+            $scope.newValue = {
+                "name": ""
+                "days_to_due": 0
+                "sign": 1
+            }
+
+        initializeNewValue()
+
+        _setDaysToDue = (value) ->
+            value.days_to_due = value.days_to_due_abs * value.sign
+
+        _valueFromEventTarget = (event) ->
+            target = angular.element(event.currentTarget)
+            row = target.parents(".row.table-main")
+            formEl = target.parents("form")
+            if not formEl.scope().value
+                return formEl.scope().newValue
+            else
+                return formEl.scope().value
+
+        saveNewValue = (target) ->
+            formEl = target.parents("form")
+            form = formEl.checksley()
+            return if not form.validate()
+
+            $scope.newValue.project = $scope.project.id
+
+            $scope.newValue.order = if $scope.maxValueOrder then $scope.maxValueOrder + 1 else 1
+
+            promise = $repo.create(valueType, $scope.newValue)
+            promise.then (data) ->
+                target.addClass("hidden")
+                data.sign = $scope.newValue.sign
+                data.days_to_due_abs = $scope.newValue.days_to_due_abs
+
+                $scope.values.push(data)
+
+                initializeNewValue()
+
+            promise.then null, (data) ->
+                form.setErrors(data)
+
+        $el.on "input", ".days-to-due-abs", (event) ->
+            event.preventDefault()
+            value = _valueFromEventTarget(event)
+            $scope.$apply ->
+                _setDaysToDue(value)
+
+        $el.on "click", ".days-to-due-sign", (event) ->
+            event.preventDefault()
+            value = _valueFromEventTarget(event)
+            $scope.$apply ->
+                value.sign = value.sign * -1
+                _setDaysToDue(value)
+
+        $el.on "click", ".add-new-due-date", debounce 2000, (event) ->
+            event.preventDefault()
+            target = $el.find(".new-value")
+            saveNewValue(target)
+
+        $el.on "click", ".delete-due-date", (event) ->
+            event.preventDefault()
+            target = angular.element(event.currentTarget)
+            formEl = target.parents("form")
+            value = formEl.scope().value
+
+            title = $translate.instant("LIGHTBOX.ADMIN_DUE_DATES.TITLE_ACTION_DELETE_DUE_DATE")
+            subtitle = $translate.instant("LIGHTBOX.ADMIN_DUE_DATES.SUBTITLE_ACTION_DELETE_DUE_DATE",
+                                          {due_date_status_name:  value.name})
+
+            $confirm.ask(title, subtitle).then (response) ->
+                onSucces = ->
+                    $ctrl.loadValues().finally ->
+                        response.finish()
+                onError = ->
+                    $confirm.notify("error")
+                $repo.remove(value).then(onSucces, onError)
+
+
+    return {
+        link: ($scope, $el, $attrs) ->
+            parentDirective.link($scope, $el, $attrs)
+            linkDueDateStatusValue($scope, $el, $attrs)
+    }
+
+module.directive("tgProjectDueDatesValues", ["$log", "$tgRepo", "$tgConfirm", "$tgLocation", "animationFrame",
+                                             "$translate", "$rootScope", "tgProjectService", ProjectDueDatesValues])
 
 #############################################################################
 ## Color selection directive

@@ -82,12 +82,18 @@ urls = {
     "project-transfer-request": "/projects/%s/transfer_request"
     "project-transfer-start": "/projects/%s/transfer_start"
 
-    # Project Values - Choises
+    # Project Values - Attributes
     "epic-statuses": "/epic-statuses"
     "userstory-statuses": "/userstory-statuses"
+    "userstory-due-dates": "/userstory-due-dates"
+    "userstory-due-dates-create-default": "/userstory-due-dates/create_default"
     "points": "/points"
     "task-statuses": "/task-statuses"
+    "task-due-dates": "/task-due-dates"
+    "task-due-dates-create-default": "/task-due-dates/create_default"
     "issue-statuses": "/issue-statuses"
+    "issue-due-dates": "/issue-due-dates"
+    "issue-due-dates-create-default": "/issue-due-dates/create_default"
     "issue-types": "/issue-types"
     "priorities": "/priorities"
     "severities": "/severities"

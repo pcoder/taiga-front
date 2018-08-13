@@ -29,6 +29,7 @@ timeout = @.taiga.timeout
 debounce = @.taiga.debounce
 sizeFormat = @.taiga.sizeFormat
 trim = @.taiga.trim
+normalizeString = @.taiga.normalizeString
 
 #############################################################################
 ## Common Lightbox Services
@@ -295,237 +296,6 @@ module.directive("tgBlockingMessageInput", ["$log", "$tgTemplate", "$compile", B
 
 
 #############################################################################
-## Create/Edit Userstory Lightbox Directive
-#############################################################################
-
-CreateEditUserstoryDirective = ($repo, $model, $rs, $rootScope, lightboxService, $loading, $translate, $confirm, $q, attachmentsService) ->
-    link = ($scope, $el, attrs) ->
-        form = null
-        $scope.createEditUs = {}
-        $scope.isNew = true
-
-        attachmentsToAdd = Immutable.List()
-        attachmentsToDelete = Immutable.List()
-
-        resetAttachments = () ->
-            attachmentsToAdd = Immutable.List()
-            attachmentsToDelete = Immutable.List()
-
-        $scope.addAttachment = (attachment) ->
-            attachmentsToAdd = attachmentsToAdd.push(attachment)
-
-        $scope.deleteAttachment = (attachment) ->
-            attachmentsToAdd = attachmentsToAdd.filter (it) ->
-                return it.get('name') != attachment.get('name')
-
-            if attachment.get("id")
-                attachmentsToDelete = attachmentsToDelete.push(attachment)
-
-        $scope.addTag = (tag, color) ->
-            value = trim(tag.toLowerCase())
-
-            tags = $scope.project.tags
-            projectTags = $scope.project.tags_colors
-
-            tags = [] if not tags?
-            projectTags = {} if not projectTags?
-
-            if value not in tags
-                tags.push(value)
-
-            projectTags[tag] = color || null
-
-            $scope.project.tags = tags
-
-            itemtags = _.clone($scope.us.tags)
-
-            inserted = _.find itemtags, (it) -> it[0] == value
-
-            if !inserted
-                itemtags.push([value , color])
-                $scope.us.tags = itemtags
-
-        $scope.deleteTag = (tag) ->
-            value = trim(tag[0].toLowerCase())
-
-            tags = $scope.project.tags
-            itemtags = _.clone($scope.us.tags)
-
-            _.remove itemtags, (tag) -> tag[0] == value
-
-            $scope.us.tags = itemtags
-
-            _.pull($scope.us.tags, value)
-
-        $scope.$on "usform:new", (ctx, projectId, status, statusList) ->
-            form.reset() if form
-            $scope.isNew = true
-            $scope.usStatusList = statusList
-            $scope.attachments = Immutable.List()
-
-            resetAttachments()
-
-            $scope.us = $model.make_model("userstories", {
-                project: projectId
-                points : {}
-                status: status
-                is_archived: false
-                tags: []
-                subject: ""
-                description: ""
-            })
-
-            # Update texts for creation
-            $el.find(".button-green").html($translate.instant("COMMON.CREATE"))
-            $el.find(".title").html($translate.instant("LIGHTBOX.CREATE_EDIT_US.NEW_US"))
-            $el.find(".tag-input").val("")
-
-            $el.find(".blocked-note").addClass("hidden")
-            $el.find("label.blocked").removeClass("selected")
-            $el.find("label.team-requirement").removeClass("selected")
-            $el.find("label.client-requirement").removeClass("selected")
-
-            $scope.createEditUsOpen = true
-
-            lightboxService.open $el, () ->
-                $scope.createEditUsOpen = false
-
-        $scope.$on "usform:edit", (ctx, us, attachments) ->
-            form.reset() if form
-
-            $scope.us = us
-            $scope.attachments = Immutable.fromJS(attachments)
-            $scope.isNew = false
-
-            resetAttachments()
-
-            # Update texts for edition
-            $el.find(".button-green").html($translate.instant("COMMON.SAVE"))
-            $el.find(".title").html($translate.instant("LIGHTBOX.CREATE_EDIT_US.EDIT_US"))
-            $el.find(".tag-input").val("")
-
-            # Update requirement info (team, client or blocked)
-            if us.is_blocked
-                $el.find(".blocked-note").removeClass("hidden")
-                $el.find("label.blocked").addClass("selected")
-            else
-                $el.find(".blocked-note").addClass("hidden")
-                $el.find("label.blocked").removeClass("selected")
-
-            if us.team_requirement
-                $el.find("label.team-requirement").addClass("selected")
-            else
-                $el.find("label.team-requirement").removeClass("selected")
-            if us.client_requirement
-                $el.find("label.client-requirement").addClass("selected")
-            else
-                $el.find("label.client-requirement").removeClass("selected")
-
-            $scope.createEditUsOpen = true
-
-            lightboxService.open $el, () ->
-                $scope.createEditUsOpen = false
-
-        createAttachments = (obj) ->
-            promises = _.map attachmentsToAdd.toJS(), (attachment) ->
-                attachmentsService.upload(attachment.file, obj.id, $scope.us.project, 'us')
-
-            return $q.all(promises)
-
-        deleteAttachments = (obj) ->
-            promises = _.map attachmentsToDelete.toJS(), (attachment) ->
-                return attachmentsService.delete("us", attachment.id)
-
-            return $q.all(promises)
-
-        submit = debounce 2000, (event) =>
-            event.preventDefault()
-
-            form = $el.find("form").checksley()
-            if not form.validate()
-                return
-
-            currentLoading = $loading()
-                .target(submitButton)
-                .start()
-
-            params = {
-                include_attachments: true,
-                include_tasks: true
-            }
-
-            if $scope.isNew
-                promise = $repo.create("userstories", $scope.us)
-                broadcastEvent = "usform:new:success"
-            else
-                promise = $repo.save($scope.us, true)
-                broadcastEvent = "usform:edit:success"
-
-            promise.then (data) ->
-                deleteAttachments(data)
-                    .then () => createAttachments(data)
-                    .then () =>
-                        currentLoading.finish()
-                        lightboxService.close($el)
-
-                        $rs.userstories.getByRef(data.project, data.ref, params).then (us) ->
-                            $rootScope.$broadcast(broadcastEvent, us)
-
-
-            promise.then null, (data) ->
-                currentLoading.finish()
-                form.setErrors(data)
-                if data._error_message
-                    $confirm.notify("error", data._error_message)
-
-        submitButton = $el.find(".submit-button")
-
-        close = () =>
-            if !$scope.us.isModified()
-                lightboxService.close($el)
-                $scope.$apply ->
-                    $scope.us.revert()
-            else
-                $confirm.ask($translate.instant("LIGHTBOX.CREATE_EDIT_US.CONFIRM_CLOSE")).then (result) ->
-                    lightboxService.close($el)
-                    $scope.us.revert()
-                    result.finish()
-
-        $el.on "submit", "form", submit
-
-        $el.find('.close').on "click", (event) ->
-            event.preventDefault()
-            event.stopPropagation()
-            close()
-
-        $el.keydown (event) ->
-            event.stopPropagation()
-            code = if event.keyCode then event.keyCode else event.which
-            if code == 27
-                close()
-
-        $scope.$on "$destroy", ->
-            $el.find('.close').off()
-            $el.off()
-
-    return {link: link}
-
-module.directive("tgLbCreateEditUserstory", [
-    "$tgRepo",
-    "$tgModel",
-    "$tgResources",
-    "$rootScope",
-    "lightboxService",
-    "$tgLoading",
-    "$translate",
-    "$tgConfirm",
-    "$q",
-    "tgAttachmentsService"
-    CreateEditUserstoryDirective
-])
-
-
-#############################################################################
 ## Creare Bulk Userstories Lightbox Directive
 #############################################################################
 
@@ -596,15 +366,6 @@ AssignedToLightboxDirective = (lightboxService, lightboxKeyboardNavigationServic
         selectedUser = null
         selectedItem = null
         usersTemplate = $template.get("common/lightbox/lightbox-assigned-to-users.html", true)
-
-        normalizeString = (string) ->
-            normalizedString = string
-            normalizedString = normalizedString.replace("Á", "A").replace("Ä", "A").replace("À", "A")
-            normalizedString = normalizedString.replace("É", "E").replace("Ë", "E").replace("È", "E")
-            normalizedString = normalizedString.replace("Í", "I").replace("Ï", "I").replace("Ì", "I")
-            normalizedString = normalizedString.replace("Ó", "O").replace("Ö", "O").replace("Ò", "O")
-            normalizedString = normalizedString.replace("Ú", "U").replace("Ü", "U").replace("Ù", "U")
-            return normalizedString
 
         filterUsers = (text, user) ->
             username = user.full_name_display.toUpperCase()
@@ -704,15 +465,6 @@ AssignedUsersLightboxDirective = ($repo, lightboxService, lightboxKeyboardNaviga
         selectedUsers = []
         selectedItem = null
         usersTemplate = $template.get("common/lightbox/lightbox-assigned-users-users.html", true)
-
-        normalizeString = (string) ->
-            normalizedString = string
-            normalizedString = normalizedString.replace("Á", "A").replace("Ä", "A").replace("À", "A")
-            normalizedString = normalizedString.replace("É", "E").replace("Ë", "E").replace("È", "E")
-            normalizedString = normalizedString.replace("Í", "I").replace("Ï", "I").replace("Ì", "I")
-            normalizedString = normalizedString.replace("Ó", "O").replace("Ö", "O").replace("Ò", "O")
-            normalizedString = normalizedString.replace("Ú", "U").replace("Ü", "U").replace("Ù", "U")
-            return normalizedString
 
         filterUsers = (text, user) ->
             username = user.full_name_display.toUpperCase()
@@ -918,7 +670,7 @@ module.directive("tgLightboxLeaveProjectWarning", ["lightboxService", LightboxLe
 ## Set Due Date Lightbox Directive
 #############################################################################
 
-SetDueDateDirective = (lightboxService, $loading, $translate, $confirm, $modelTransform) ->
+SetDueDateDirective = ($rootscope, lightboxService, $loading, $translate, $confirm, $modelTransform) ->
     link = ($scope, $el, attrs) ->
         prettyDate = $translate.instant("COMMON.PICKERDATE.FORMAT")
         lightboxService.open($el)
@@ -938,6 +690,17 @@ SetDueDateDirective = (lightboxService, $loading, $translate, $confirm, $modelTr
                 .target($el.find(".submit-button"))
                 .start()
 
+            if $scope.notAutoSave
+                new_due_date = $('.due-date').val()
+                $scope.object.due_date = if (new_due_date) \
+                    then moment(new_due_date, prettyDate).format("YYYY-MM-DD") \
+                    else null
+
+                $scope.$apply()
+                currentLoading.finish()
+                lightboxService.close($el)
+                return
+
             transform = $modelTransform.save (object) ->
                 new_due_date = $('.due-date').val()
                 object.due_date = if (new_due_date) \
@@ -954,6 +717,7 @@ SetDueDateDirective = (lightboxService, $loading, $translate, $confirm, $modelTr
             transform.finally ->
                 currentLoading.finish()
                 lightboxService.close($el)
+                $rootscope.$broadcast("object:updated")
 
         $el.on "click", ".submit-button", (event) ->
             event.preventDefault()
@@ -968,7 +732,11 @@ SetDueDateDirective = (lightboxService, $loading, $translate, $confirm, $modelTr
                 askResponse.finish()
                 $('.due-date').val(null)
                 $scope.object.due_date_reason = null
-                save()
+                if $scope.notAutoSave
+                    $scope.object.due_date = null
+                    lightboxService.close($el)
+                else
+                    save()
 
         $el.on "click", ".delete-due-date", (event) ->
             event.preventDefault()
@@ -980,5 +748,500 @@ SetDueDateDirective = (lightboxService, $loading, $translate, $confirm, $modelTr
         scope: true
     }
 
-module.directive("tgLbSetDueDate", ["lightboxService", "$tgLoading", "$translate", "$tgConfirm"
+module.directive("tgLbSetDueDate", ["$rootScope", "lightboxService", "$tgLoading", "$translate", "$tgConfirm"
                                     "$tgQueueModelTransformation", SetDueDateDirective])
+
+
+
+#############################################################################
+## Create/Edit Lightbox Directive
+#############################################################################
+
+groupBy = @.taiga.groupBy
+
+CreateEditDirective = (
+$log, $repo, $model, $rs, $rootScope, lightboxService, $loading, $translate,
+$confirm, $q, attachmentsService, $template, $compile) ->
+    link = ($scope, $el, attrs) ->
+        schema = null
+        objType = null
+        form = null
+
+        attachmentsToAdd = Immutable.List()
+        attachmentsToDelete = Immutable.List()
+
+        schemas = {
+            us: {
+                objName: 'User Story',
+                model: 'userstories',
+                params: { include_attachments: true, include_tasks: true },
+                data: (project) ->
+                    return {
+                        statusList: _.sortBy(project.us_statuses, "order")
+                    }
+                initialData: (data) ->
+                    return {
+                        project: data.project.id
+                        subject: ""
+                        description: ""
+                        tags: []
+                        points : {}
+                        status: if data.statusId then data.statusId else data.project.default_us_status
+                        is_archived: false
+                    }
+            }
+            task: {
+                objName: 'Task',
+                model: 'tasks',
+                params: { include_attachments: true },
+                data: (project) ->
+                    return {
+                        statusList: _.sortBy(project.task_statuses, "order")
+                    }
+                initialData: (data) ->
+                    return {
+                        project: data.project.id
+                        subject: ""
+                        description: ""
+                        assigned_to: null
+                        tags: []
+                        milestone: data.sprintId
+                        status: data.project.default_task_status
+                        user_story: data.usId
+                        is_archived: false
+                    }
+            },
+            issue: {
+                objName: 'Issue',
+                model: 'issues',
+                params: { include_attachments: true },
+                data: (project) ->
+                    return {
+                        project: project
+                        statusList: _.sortBy(project.issue_statuses, "order")
+                        typeById: groupBy(project.issue_types, (x) -> x.id)
+                        typeList: _.sortBy(project.issue_types, "order")
+                        severityById: groupBy(project.severities, (x) -> x.id)
+                        severityList: _.sortBy(project.severities, "order")
+                        priorityById: groupBy(project.priorities, (x) -> x.id)
+                        priorityList: _.sortBy(project.priorities, "order")
+                        milestonesById: groupBy(project.milestones, (x) -> x.id)
+                    }
+                initialData: (data) ->
+                    return {
+                        assigned_to: null
+                        milestone: data.sprintId
+                        priority: data.project.default_priority
+                        project: data.project.id
+                        severity: data.project.default_severity
+                        status: data.project.default_issue_status
+                        subject: ""
+                        tags: []
+                        type: data.project.default_issue_type
+                    }
+            }
+        }
+
+        $scope.setMode = (value) ->
+            $scope.mode = value
+
+        $scope.$on "genericform:new", (ctx, params) ->
+            getSchema(params)
+            $scope.mode = 'new'
+            $scope.getOrCreate = false
+            mount(params)
+
+        $scope.$on "genericform:new-or-existing", (ctx, params) ->
+            getSchema(params)
+            $scope.mode = 'add-existing'
+            $scope.getOrCreate = true
+            $scope.existingFilterText = ''
+
+            $rs[schema.model].listInAllProjects({ project: $scope.project.id }, true).then (data) ->
+                $scope.existingItems = angular.copy(data)
+            mount(params)
+
+        $scope.$on "genericform:edit", (ctx, params) ->
+            getSchema(params)
+            $scope.mode = 'edit'
+            $scope.getOrCreate = false
+            mount(params)
+
+        getSchema = (params) ->
+            _.map params, (value, key) ->
+                $scope[key] = value
+
+            if !$scope.objType || !schemas[$scope.objType]
+                return $log.error("Invalid objType `#{$scope.objType}` for `genericform` event")
+            schema = schemas[$scope.objType]
+
+        mount = (params) ->
+            $scope.objName = schema.objName
+            if $scope.mode == 'edit'
+                $scope.obj = params.obj
+                $scope.attachments = Immutable.fromJS(params.attachments)
+            else
+                $scope.obj = $model.make_model(schema.model, schema.initialData(params))
+                $scope.attachments = Immutable.List()
+
+            _.map schema.data($scope.project), (value, key) ->
+                $scope[key] = value
+
+            form.reset() if form
+            resetAttachments()
+            setStatus($scope.obj.status)
+            render()
+            $scope.lightboxOpen = true
+            lightboxService.open($el)
+
+        resetAttachments = () ->
+            attachmentsToAdd = Immutable.List()
+            attachmentsToDelete = Immutable.List()
+
+        $scope.addAttachment = (attachment) ->
+            attachmentsToAdd = attachmentsToAdd.push(attachment)
+
+        $scope.deleteAttachment = (attachment) ->
+            attachmentsToAdd = attachmentsToAdd.filter (it) ->
+                return it.get('name') != attachment.get('name')
+
+            if attachment.get("id")
+                attachmentsToDelete = attachmentsToDelete.push(attachment)
+
+        $scope.addTag = (tag, color) ->
+            value = trim(tag.toLowerCase())
+            tags = $scope.project.tags
+            projectTags = $scope.project.tags_colors
+
+            tags = [] if not tags?
+            projectTags = {} if not projectTags?
+
+            if value not in tags
+                tags.push(value)
+
+            projectTags[tag] = color || null
+            $scope.project.tags = tags
+
+            itemtags = _.clone($scope.obj.tags)
+            inserted = _.find itemtags, (it) -> it[0] == value
+
+            if !inserted
+                itemtags.push([value , color])
+                $scope.obj.tags = itemtags
+
+        $scope.deleteTag = (tag) ->
+            value = trim(tag[0].toLowerCase())
+            tags = $scope.project.tags
+            itemtags = _.clone($scope.obj.tags)
+
+            _.remove itemtags, (tag) -> tag[0] == value
+            $scope.obj.tags = itemtags
+            _.pull($scope.obj.tags, value)
+
+        createAttachments = (obj) ->
+            promises = _.map attachmentsToAdd.toJS(), (attachment) ->
+                attachmentsService.upload(attachment.file, obj.id, $scope.obj.project, $scope.objType)
+            return $q.all(promises)
+
+        deleteAttachments = (obj) ->
+            promises = _.map attachmentsToDelete.toJS(), (attachment) ->
+                return attachmentsService.delete($scope.objType, attachment.id)
+            return $q.all(promises)
+
+        addExisting = (item) ->
+            currentLoading = $loading().target($el.find(".add-existing-button")).start()
+
+            if item.milestone
+                currentLoading.finish()
+                lightboxService.close($el)
+                sprintChangeConfirmAndSave(item)
+            else
+                onSuccess = ->
+                    currentLoading.finish()
+                    lightboxService.close($el)
+                    $rootScope.$broadcast("#{$scope.objType}form:add:success", item)
+                onError = ->
+                    currentLoading.finish()
+                    lightboxService.close($el)
+                saveItem(item, onSuccess, onError)
+
+        sprintChangeConfirmAndSave = (item) ->
+            oldSprintName = $scope.milestonesById[item.milestone].name
+            newSprintName = $scope.milestonesById[$scope.relatedObjectId].name
+            title = $translate.instant("ISSUES.CONFIRM_CHANGE_FROM_SPRINT.TITLE")
+            message = $translate.instant("ISSUES.CONFIRM_CHANGE_FROM_SPRINT.MESSAGE",
+                {issue: item.subject, oldSprintName: oldSprintName, newSprintName: newSprintName})
+
+            $confirm.ask(title, null, message).then (askResponse) ->
+                onSuccess = ->
+                    askResponse.finish()
+                    lightboxService.close($el)
+                    $rootScope.$broadcast("#{$scope.objType}form:add:success", item)
+
+                onError = ->
+                    askResponse.finish(false)
+                    $confirm.notify("error")
+                saveItem(item, onSuccess, onError)
+
+        saveItem = (item, onSuccess, onError) ->
+            item.setAttr($scope.relatedField, $scope.relatedObjectId)
+            $repo.save(item, true).then(onSuccess, onError)
+
+
+        isDisabledExisting = (item) ->
+            return item && item[$scope.relatedField] == $scope.relatedObjectId
+
+        $scope.isDisabledExisting = (selectedItem) ->
+            isDisabledExisting(selectedItem)
+
+        $scope.addExisting = (selectedItem) ->
+            event.preventDefault()
+            addExisting(selectedItem)
+
+        submit = debounce 2000, (event) ->
+            form = $el.find("form").checksley()
+            if not form.validate()
+                return
+
+            currentLoading = $loading().target($el.find(".submit-button")).start()
+
+            if $scope.mode == 'new'
+                promise = $repo.create(schema.model, $scope.obj)
+                broadcastEvent = "#{$scope.objType}form:new:success"
+            else
+                if ($scope.obj.due_date instanceof moment)
+                    prettyDate = $translate.instant("COMMON.PICKERDATE.FORMAT")
+                    $scope.obj.due_date = $scope.obj.due_date.format("YYYY-MM-DD")
+
+                promise = $repo.save($scope.obj, true)
+                broadcastEvent = "#{$scope.objType}form:edit:success"
+
+            promise.then (data) ->
+                deleteAttachments(data).then () ->
+                    createAttachments(data).then () ->
+                        currentLoading.finish()
+                        lightboxService.close($el)
+                        $rs[schema.model].getByRef(data.project, data.ref, schema.params).then (obj) ->
+                            $rootScope.$broadcast(broadcastEvent, obj)
+            promise.then null, (data) ->
+                currentLoading.finish()
+                form.setErrors(data)
+                if data._error_message
+                    $confirm.notify("error", data._error_message)
+
+        checkClose = () ->
+            if !$scope.obj.isModified()
+                lightboxService.close($el)
+                $scope.$apply ->
+                    $scope.obj.revert()
+            else
+                $confirm.ask(
+                    $translate.instant("LIGHTBOX.CREATE_EDIT.CONFIRM_CLOSE")).then (result) ->
+                        result.finish()
+                        lightboxService.close($el)
+
+        $el.on "submit", "form", submit
+
+        $el.find('.close').on "click", (event) ->
+            event.preventDefault()
+            event.stopPropagation()
+            checkClose()
+
+        $el.keydown (event) ->
+            event.stopPropagation()
+            code = if event.keyCode then event.keyCode else event.which
+            if code == 27
+                checkClose()
+
+        $el.on "click", ".status-dropdown", (event) ->
+            event.preventDefault()
+            event.stopPropagation()
+            $el.find(".pop-status").popover().open()
+
+        $el.on "click", ".status", (event) ->
+            event.preventDefault()
+            event.stopPropagation()
+            setStatus(angular.element(event.currentTarget).data("status-id"))
+            $scope.$apply()
+            $scope.$broadcast("status:changed", $scope.obj.status)
+            $el.find(".pop-status").popover().close()
+
+        $el.on "click", ".users-dropdown", (event) ->
+            event.preventDefault()
+            event.stopPropagation()
+            $el.find(".pop-users").popover().open()
+
+        $el.on "click", ".team-requirement", (event) ->
+            $scope.obj.team_requirement = not $scope.obj.team_requirement
+            $scope.$apply()
+
+        $el.on "click", ".client-requirement", (event) ->
+            $scope.obj.client_requirement = not $scope.obj.client_requirement
+            $scope.$apply()
+
+        $el.on "click", ".is-blocked", (event) ->
+            $scope.obj.is_blocked = not $scope.obj.is_blocked
+            $scope.$apply()
+
+        $el.on "click", ".iocaine", (event) ->
+            $scope.obj.is_iocaine = not $scope.obj.is_iocaine
+            $scope.$broadcast("isiocaine:changed", $scope.obj)
+
+        $scope.isTeamRequirement = () ->
+            return $scope.obj?.team_requirement
+
+        $scope.isClientRequirement = () ->
+            return $scope.obj?.client_requirement
+
+        setStatus = (id) ->
+            $scope.obj.status = id
+            $scope.selectedStatus = _.find $scope.statusList, (item) -> item.id == id
+            $scope.obj.is_closed = $scope.selectedStatus.is_closed
+
+        render = (sprint) ->
+            template = $template.get("common/lightbox/lightbox-create-edit/lb-create-edit.html")
+            templateScope = $scope.$new()
+            compiledTemplate = $compile(template)(templateScope)
+            $el.html(compiledTemplate)
+
+    return {
+        link: link
+    }
+
+module.directive("tgLbCreateEdit", [
+    "$log",
+    "$tgRepo",
+    "$tgModel",
+    "$tgResources",
+    "$rootScope",
+    "lightboxService",
+    "$tgLoading",
+    "$translate",
+    "$tgConfirm",
+    "$q",
+    "tgAttachmentsService",
+    "$tgTemplate",
+    "$compile",
+    CreateEditDirective
+])
+
+
+#############################################################################
+## RelateToEpic Lightbox Directive
+#############################################################################
+
+debounceLeading = @.taiga.debounceLeading
+
+RelateToEpicLightboxDirective = ($rootScope, $confirm, lightboxService, $tgCurrentUserService
+tgResources, $tgResources, $epicsService, tgAnalytics) ->
+    link = ($scope, $el, $attrs) ->
+        us = null
+
+        $scope.projects = null
+        $scope.projectEpics = Immutable.List()
+        $scope.loading = false
+        $scope.selectedProject = $scope.project.id
+
+        newEpicForm = $el.find(".new-epic-form").checksley()
+        existingEpicForm = $el.find(".existing-epic-form").checksley()
+
+        loadProjects = ->
+            if $scope.projects == null
+                $scope.projects = $tgCurrentUserService.projects.get("unblocked")
+
+        filterEpics = (selectedProjectId, filterText) ->
+            tgResources.epics.listInAllProjects(
+                {
+                    is_epics_activated: true,
+                    project__blocked_code: 'null',
+                    project: selectedProjectId,
+                    q: filterText
+                }, true).then (data) ->
+                    excludeIds = []
+                    if (us.epics)
+                        excludeIds = us.epics.map((epic) -> epic.id)
+                    filteredData = data.filter((epic) -> excludeIds.indexOf(epic.get('id')) == -1)
+                    $scope.projectEpics = filteredData
+
+        selectProject = (selectedProjectId) ->
+            $scope.selectedEpic = null
+            $scope.searchEpic = ""
+            filterEpics(selectedProjectId, $scope.searchEpic)
+
+        $el.on "click", ".close", (event) ->
+            event.preventDefault()
+            lightboxService.close($el)
+
+        $scope.$on "relate-to-epic:add", (ctx, item) ->
+            us = item
+            $scope.selectedEpic = null
+            $scope.searchEpic = ""
+            loadProjects()
+            filterEpics($scope.selectedProject, $scope.searchEpic).then () ->
+                lightboxService.open($el).then ->
+                    $el.find('input').focus
+
+        $scope.$on "$destroy", ->
+            $el.off()
+
+        $scope.selectProject = (selectedProjectId) ->
+            selectProject(selectedProjectId)
+
+        $scope.onUpdateSearchEpic = debounceLeading 300, () ->
+            $scope.selectedEpic = null
+            filterEpics($scope.selectedProject, $scope.searchEpic)
+
+        $scope.saveRelatedEpic = (selectedEpicId, onSavedRelatedEpic) ->
+            return if not existingEpicForm.validate()
+
+            $scope.loading = true
+
+            onError = (data) ->
+                $scope.loading = false
+                $confirm.notify("error")
+                existingEpicForm.setErrors(data)
+
+            onSuccess = (data) ->
+                tgAnalytics.trackEvent(
+                    "user story related epic", "create", "create related epic on user story", 1)
+                $scope.loading = false
+                $rootScope.$broadcast("related-epics:changed", us)
+                lightboxService.close($el)
+
+            usId = us.id
+            tgResources.epics.addRelatedUserstory(selectedEpicId, usId).then(
+                onSuccess, onError)
+
+        $scope.createEpic = (selectedProjectId, epicSubject) ->
+            return if not newEpicForm.validate()
+
+            @.loading = true
+
+            onError = (data)->
+                $scope.loading = false
+                $confirm.notify("error")
+                newEpicForm.setErrors(errors)
+
+            onSuccess = () ->
+                tgAnalytics.trackEvent(
+                    "user story related epic", "create", "create related epic on user story", 1)
+                $scope.loading = false
+                $rootScope.$broadcast("related-epics:changed", us)
+                lightboxService.close($el)
+
+            onCreateEpic = (epic) ->
+                epicId = epic.get('id')
+                usId = us.id
+                tgResources.epics.addRelatedUserstory(epicId, usId).then(onSuccess, onError)
+
+            $epicsService.createEpic(
+                {subject: epicSubject}, null, selectedProjectId).then(onCreateEpic, onError)
+
+    return {
+        templateUrl: "common/lightbox/lightbox-relate-to-epic.html"
+        link:link
+    }
+
+module.directive("tgLbRelatetoepic", [
+    "$rootScope", "$tgConfirm", "lightboxService", "tgCurrentUserService", "tgResources",
+    "$tgResources", "tgEpicsService", "$tgAnalytics", RelateToEpicLightboxDirective])

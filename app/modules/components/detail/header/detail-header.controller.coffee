@@ -32,6 +32,11 @@ class StoryHeaderController
         @.editMode = false
         @.loadingSubject = false
         @.originalSubject = @.item.subject
+        @.objType = {
+            'tasks': 'task',
+            'issues': 'issue',
+            'userstories': 'us',
+        }[@.item._name]
 
     _checkNav: () ->
         if @.item.neighbors.previous?.ref?
@@ -86,5 +91,8 @@ class StoryHeaderController
         transform = @modelTransform.save (item) ->
             return item
         return transform.then(onEditSubjectSuccess, onEditSubjectError)
+
+    relateToEpic: (us) ->
+        @rootScope.$broadcast("relate-to-epic:add", us)
 
 module.controller("StoryHeaderCtrl", StoryHeaderController)

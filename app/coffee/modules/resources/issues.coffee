@@ -51,9 +51,15 @@ resourceProvider = ($repo, $http, $urls, $storage, $q) ->
         service.storeQueryParams(projectId, params)
         return $repo.queryPaginated("issues", params, options)
 
-    service.bulkCreate = (projectId, data) ->
+    service.listInProject = (projectId, sprintId=null, params) ->
+        params = _.merge(params, {project: projectId})
+        params.milestone = sprintId if sprintId
+        service.storeQueryParams(projectId, params)
+        return $repo.queryMany("issues", params)
+
+    service.bulkCreate = (projectId, milestoneId, data) ->
         url = $urls.resolve("bulk-create-issues")
-        params = {project_id: projectId, bulk_issues: data}
+        params = {project_id: projectId,  milestone_id: milestoneId, bulk_issues: data}
         return $http.post(url, params)
 
     service.upvote = (issueId) ->
@@ -82,6 +88,11 @@ resourceProvider = ($repo, $http, $urls, $storage, $q) ->
         params = {"project": projectId}
         service.storeQueryParams(projectId, params)
         return $repo.queryMany(type, params)
+
+    service.createDefaultValues = (projectId, type) ->
+        data = {"project_id": projectId}
+        url = $urls.resolve("#{type}-create-default")
+        return $http.post(url, data)
 
     service.storeQueryParams = (projectId, params) ->
         ns = "#{projectId}:#{hashSuffix}"

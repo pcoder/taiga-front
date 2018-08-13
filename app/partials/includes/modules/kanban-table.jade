@@ -62,7 +62,7 @@ div.kanban-table(
 
     div.kanban-table-body
         div.kanban-table-inner
-            div.kanban-uses-box.task-column(ng-class='{vfold:folds[s.id]}',
+            div.kanban-uses-box.taskboard-column(ng-class='{vfold:folds[s.id]}',
                 ng-repeat="s in ::usStatusList track by s.id",
                 tg-kanban-wip-limit="s",
                 tg-kanban-column-height-fixer,
@@ -84,6 +84,7 @@ div.kanban-table(
                     on-click-assigned-to="ctrl.changeUsAssignedUsers(id)"
                     project="project"
                     item="us"
+                    type="us"
                     zoom="ctrl.zoom"
                     zoom-level="ctrl.zoomLevel"
                     archived="ctrl.isUsInArchivedHiddenStatus(us.get('id'))"

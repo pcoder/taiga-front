@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## 3.4.0 Pinus contorta (2018-08-13)
+
+### Features
+
+- Due dates administration (https://tree.taiga.io/project/taiga/issue/3069)
+- Issues to sprint (https://tree.taiga.io/project/taiga/issue/1181)
+- Link US to Epics - https://tree.taiga.io/project/taiga/issue/4732
+- New lightbox - https://tree.taiga.io/project/taiga/issue/3167
+
+## 3.3.16 (2018-08-08)
+
+- Fix another bug related with ordering US.
+
+## 3.3.15 (2018-08-06)
+
+### Misc
+
+- Filter by cards to find position in Kanban.
+
+## 3.3.14 (2018-08-06)
+
+### Misc
+
+- Move US to the end when status archived and hidden
+
+- Fix US order when move it
+
 ## 3.3.13 (2018-07-05)
 
 ### Misc

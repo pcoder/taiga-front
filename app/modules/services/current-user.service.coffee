@@ -116,6 +116,8 @@ class CurrentUserService
     setProjects: (projects) ->
         @._projects = @._projects.set("all", projects)
         @._projects = @._projects.set("recents", projects.slice(0, 10))
+        @._projects = @._projects.set("unblocked",
+                                      projects.filter((project) -> project.toJS().blocked_code == null))
 
         @._projectsById = Immutable.fromJS(groupBy(projects.toJS(), (p) -> p.id))
 
@@ -123,56 +125,60 @@ class CurrentUserService
 
     canCreatePrivateProjects: () ->
         user = @.getUser()
-        if user.get('max_private_projects') != null && user.get('total_private_projects') >= user.get('max_private_projects')
-            return {
-                valid: false,
-                reason: 'max_private_projects',
-                type: 'private_project',
-                current: user.get('total_private_projects'),
-                max: user.get('max_private_projects')
-            }
+        if user.get('max_private_projects') != null &&
+            user.get('total_private_projects') >= user.get('max_private_projects')
+                return {
+                    valid: false,
+                    reason: 'max_private_projects',
+                    type: 'private_project',
+                    current: user.get('total_private_projects'),
+                    max: user.get('max_private_projects')
+                }
 
         return {valid: true}
 
     canCreatePublicProjects: () ->
         user = @.getUser()
 
-        if user.get('max_public_projects') != null && user.get('total_public_projects') >= user.get('max_public_projects')
-            return {
-                valid: false,
-                reason: 'max_public_projects',
-                type: 'public_project',
-                current: user.get('total_public_projects'),
-                max: user.get('max_public_projects')
-            }
+        if user.get('max_public_projects') != null &&
+            user.get('total_public_projects') >= user.get('max_public_projects')
+                return {
+                    valid: false,
+                    reason: 'max_public_projects',
+                    type: 'public_project',
+                    current: user.get('total_public_projects'),
+                    max: user.get('max_public_projects')
+                }
 
         return {valid: true}
 
     canAddMembersPublicProject: (totalMembers) ->
         user = @.getUser()
 
-        if user.get('max_memberships_public_projects') != null && totalMembers > user.get('max_memberships_public_projects')
-            return {
-                valid: false,
-                reason: 'max_members_public_projects',
-                type: 'public_project',
-                current: totalMembers,
-                max: user.get('max_memberships_public_projects')
-            }
+        if user.get('max_memberships_public_projects') != null &&
+            totalMembers > user.get('max_memberships_public_projects')
+                return {
+                    valid: false,
+                    reason: 'max_members_public_projects',
+                    type: 'public_project',
+                    current: totalMembers,
+                    max: user.get('max_memberships_public_projects')
+                }
 
         return {valid: true}
 
     canAddMembersPrivateProject: (totalMembers) ->
         user = @.getUser()
 
-        if user.get('max_memberships_private_projects') != null && totalMembers > user.get('max_memberships_private_projects')
-            return {
-                valid: false,
-                reason: 'max_members_private_projects',
-                type: 'private_project',
-                current: totalMembers,
-                max: user.get('max_memberships_private_projects')
-            }
+        if user.get('max_memberships_private_projects') != null &&
+            totalMembers > user.get('max_memberships_private_projects')
+                return {
+                    valid: false,
+                    reason: 'max_members_private_projects',
+                    type: 'private_project',
+                    current: totalMembers,
+                    max: user.get('max_memberships_private_projects')
+                }
 
         return {valid: true}
 

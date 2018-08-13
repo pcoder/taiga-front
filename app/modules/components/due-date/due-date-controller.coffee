@@ -21,9 +21,16 @@ class DueDateController
     @.$inject = [
         "$translate"
         "tgLightboxFactory"
+        "tgProjectService"
+        "$rootScope"
     ]
 
-    constructor: (@translate, @tgLightboxFactory) ->
+    constructor: (@translate, @tgLightboxFactory, @projectService,  @rootscope) ->
+        @.defaultConfig = [
+            {"color": "#9dce0a", "name": "normal due", "days_to_due": null, "by_default": true},
+            {"color": "#ff9900", "name": "due soon", "days_to_due": 14, "by_default": false},
+            {"color": "#ff8a84", "name": "past due", "days_to_due": 0, "by_default": false}
+        ]
 
     visible: () ->
         return @.format == 'button' or @.dueDate?
@@ -32,40 +39,64 @@ class DueDateController
         return @.isClosed
 
     color: () ->
-        colors = {
-            'no_longer_applicable': 'closed',
-            'due_soon': 'due-soon',
-            'past_due': 'past-due',
-            'set': 'due-set',
-        }
-        return colors[@.dueDateStatus] or ''
+        return @.getStatus()?.color || null
 
     title: () ->
-        if @.format == 'button'
-            return if @.dueDate then @._formatTitle() else 'Edit due date'
+        if @.dueDate
+            return @._formatTitle()
+        else if @.format == 'button'
+            return @translate.instant('COMMON.DUE_DATE.TITLE_ACTION_SET_DUE_DATE')
+        return ''
 
-        return @._formatTitle()
+    getStatus: (options) ->
+        if !@.dueDate
+            return null
+
+        project = @projectService.project.toJS()
+        options = project["#{@.objType}_duedates"]
+
+        if !options
+            options = @.defaultConfig
+
+        return @._getAppearance(options)
+
+    _getDefaultAppearance: (options) ->
+        defaultAppearance = null
+        _.map options, (option) ->
+            if option.by_default == true
+                defaultAppearance = option
+        return defaultAppearance
+
+    _getAppearance: (options) ->
+        currentAppearance = @._getDefaultAppearance(options)
+        options = _.sortBy(options, (o) -> - o.days_to_due) # sort desc
+
+        dueDate = moment(@.dueDate)
+        now = moment()
+        _.map options, (appearance) ->
+            if appearance.days_to_due == null
+                return
+            limitDate = moment(dueDate - moment.duration(appearance.days_to_due, "days"))
+            if now >= limitDate
+                currentAppearance = appearance
+
+        return currentAppearance
 
     _formatTitle: () ->
-        dueDateStatus = 'closed'
-        titles = {
-            'no_longer_applicable': 'COMMON.DUE_DATE.NO_LONGER_APPLICABLE',
-            'due_soon': 'COMMON.DUE_DATE.DUE_SOON',
-            'past_due': 'COMMON.DUE_DATE.PAST_DUE',
-        }
         prettyDate = @translate.instant("COMMON.PICKERDATE.FORMAT")
         formatedDate = moment(@.dueDate).format(prettyDate)
 
-        if not titles[@.dueDateStatus]
-            return formatedDate
-        return "#{formatedDate} (#{@translate.instant(titles[@.dueDateStatus])})"
+        status = @.getStatus()
+        if status?.name
+            return "#{formatedDate} (#{status.name})"
+        return formatedDate
 
     setDueDate: () ->
         return if @.disabled()
         @tgLightboxFactory.create(
             "tg-lb-set-due-date",
             {"class": "lightbox lightbox-set-due-date"},
-            {"object": @.item}
+            {"object": @.item, "notAutoSave": @.notAutoSave}
         )
 
-angular.module('taigaComponents').controller('DueDate', DueDateController)
+angular.module('taigaComponents').controller('DueDateCtrl', DueDateController)
